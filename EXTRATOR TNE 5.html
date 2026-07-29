@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSM EXTRATOR TNE v3.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #fef2f2;
+            --white: #ffffff;
+            --surface: #f7f8fc;
+            --border: #e2e7f0;
+            --border2: #c8d1e3;
+            --accent: #cf5f00;
+            --accent-h: #ca8338;
+            --accent-light: #fff5ed;
+            --accent-mid: #ffdbb5;
+            --green: #801515;
+            --green-light: #fce4e4;
+            --green-btn: #a35616;
+            --red: #b91c1c;
+            --red-light: #fef2f2;
+            --orange: #c2410c;
+            --orange-light: #fff7ed;
+            --yellow: #92400e;
+            --yellow-light: #fffbeb;
+            --purple: #7c3aed;
+            --purple-light: #f5f3ff;
+            --text: #0f172a;
+            --text2: #1e293b;
+            --muted: #64748b;
+            --subtle: #94a3b8;
+            --tag: #e8edf5;
+            --sh-sm: 0 1px 3px rgba(15, 23, 42, .06), 0 4px 12px rgba(15, 23, 42, .06);
+            --sh: 0 2px 8px rgba(15, 23, 42, .07), 0 8px 24px rgba(15, 23, 42, .06);
+            --r: 14px;
+            --r-sm: 9px;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; line-height: 1.5; }
+        .app-container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+
+        .header { background: linear-gradient(135deg, #4a1a0a, #8b3a0a, #cf5f00); color: #fff; padding: 20px 30px; border-radius: var(--r); margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: var(--sh); }
+        .header h1 { font-size: 26px; font-weight: 600; display: flex; align-items: center; gap: 12px; letter-spacing: -0.5px; }
+        .header h1 small { font-size: 14px; font-weight: 400; opacity: 0.7; letter-spacing: 0; }
+        .header-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .sla-counter { background: rgba(255, 255, 255, 0.1); padding: 6px 16px; border-radius: 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.1); }
+        .sla-counter span { font-weight: 600; color: #69f0ae; }
+
+        .layout { display: flex; gap: 20px; align-items: flex-start; }
+        .sidebar { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 20px; }
+        .main-content { flex: 1; min-width: 0; }
+
+        .upload-card { background: var(--white); border-radius: var(--r-sm); box-shadow: var(--sh-sm); padding: 16px; border: 1px solid var(--border); }
+        .upload-card h3 { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .upload-slot { display:block; position: relative; background: var(--bg); border: 2px dashed var(--border2); border-radius: var(--r-sm); padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .upload-slot:hover { border-color: var(--accent); background: var(--accent-light); }
+        .upload-slot.loaded { border-style: solid; border-color: var(--green); background: var(--green-light); cursor: default; }
+        .upload-slot .slot-icon { font-size: 24px; margin-bottom: 6px; }
+        .upload-slot .slot-title { font-size: 12px; font-weight: 600; color: var(--text2); }
+        .upload-slot .slot-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+        .upload-slot .slot-status { font-size: 10px; font-weight: 600; margin-top: 6px; }
+        .upload-slot .slot-status.ok { color: var(--green); }
+        .upload-slot .slot-status.waiting { color: var(--orange); }
+        .upload-slot input[type="file"] { display:none; }
+        .upload-slot .slot-clear { z-index:2; position:relative; }
+        .upload-slot.loaded { pointer-events:none; }
+        .upload-slot.loaded .slot-clear { pointer-events:auto; }
+        .upload-slot .slot-clear { display: none; position: absolute; top: 6px; right: 8px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+        .upload-slot.loaded .slot-clear { display: block; }
+        .upload-slot .slot-clear:hover { color: var(--red); background: var(--red-light); }
+
+        .cross-status { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        .cross-badge { padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .cross-badge.fora { background: var(--red-light); color: var(--red); }
+        .cross-badge.verificar { background: var(--orange-light); color: var(--orange); }
+        .cross-badge.concentrador { background: var(--purple-light); color: var(--purple); }
+        tr.row-concentrador { background: var(--red-light) !important; }
+        tr.row-concentrador:hover { background: #ffd9d6 !important; }
+        .cross-badge.normal { background: var(--green-light); color: var(--green); }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .stat-card { background: var(--white); padding: 12px 16px; border-radius: var(--r-sm); box-shadow: var(--sh-sm); border-left: 4px solid var(--accent); cursor: pointer; transition: all 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--sh); }
+        .stat-card .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .stat-card .value { font-size: 22px; font-weight: 700; color: var(--text); margin: 2px 0; }
+        .stat-card .sub { font-size: 10px; color: var(--subtle); }
+        .stat-card.p1 { border-left-color: var(--red); }
+        .stat-card.p2 { border-left-color: var(--orange); }
+        .stat-card.p3 { border-left-color: var(--yellow); }
+        .stat-card.p4 { border-left-color: #64b5f6; }
+        .stat-card.p5 { border-left-color: var(--subtle); }
+        .stat-card.sla { border-left-color: var(--green); }
+        .stat-card.sla .value { color: var(--green); }
+        .stat-card.vencidos { border-left-color: var(--red); }
+        .stat-card.vencidos .value { color: var(--red); }
+        .stat-card.active-filter { background: var(--accent-light); box-shadow: 0 0 0 2px var(--accent); }
+
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; align-items: center; padding: 10px 16px; background: var(--white); border-radius: var(--r-sm); box-shadow: var(--sh-sm); }
+        .filter-bar .filter-label { font-weight: 600; color: var(--text2); font-size: 11px; margin-right: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .filter-btn { padding: 4px 14px; border: 2px solid var(--border); background: var(--white); border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s; color: var(--text2); }
+        .filter-btn:hover { background: #f5f5f7; border-color: var(--subtle); }
+        .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .filter-btn.p1-active { background: var(--red); color: #fff; border-color: var(--red); }
+        .filter-btn.p2-active { background: var(--orange); color: #fff; border-color: var(--orange); }
+        .filter-btn.p3-active { background: var(--yellow); color: #333; border-color: var(--yellow); }
+        .filter-btn.p4-active { background: #64b5f6; color: #fff; border-color: #64b5f6; }
+        .filter-btn.p5-active { background: var(--subtle); color: #fff; border-color: var(--subtle); }
+        .filter-btn.vencidos-active { background: var(--red); color: #fff; border-color: var(--red); }
+        .filter-btn.noprazo-active { background: var(--green); color: #fff; border-color: var(--green); }
+        .filter-btn.fora-active { background: var(--red); color: #fff; border-color: var(--red); }
+        .filter-btn.verificar-active { background: var(--orange); color: #fff; border-color: var(--orange); }
+        .filter-btn.concentrador-active { background: var(--purple); color: #fff; border-color: var(--purple); }
+        .filter-btn.tne1-active { background: #6a1b9a; color: #fff; border-color: #6a1b9a; }
+        .filter-btn.tne2-active { background: #00695c; color: #fff; border-color: #00695c; }
+        .filter-separator { width: 1px; height: 28px; background: var(--border); margin: 0 6px; }
+
+        .search-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--white); border-radius: var(--r-sm); box-shadow: var(--sh-sm); margin-bottom: 12px; }
+        .search-bar input { flex: 1; min-width: 200px; padding: 8px 14px; border-radius: 20px; border: 2px solid var(--border); font-size: 13px; outline: none; transition: all 0.2s; background: var(--bg); color: var(--text); }
+        .search-bar input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(207, 95, 0, 0.15); background: var(--white); }
+
+        .table-wrapper { overflow-x: auto; max-height: 520px; overflow-y: auto; border-radius: var(--r-sm); border: 1px solid var(--border); margin-top: 10px; background: var(--white); }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        thead { position: sticky; top: 0; z-index: 10; }
+        th { background: #4a1a0a; color: #fff; padding: 9px 12px; text-align: left; white-space: nowrap; cursor: pointer; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
+        th:hover { background: #6a2a0a; }
+        td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 12px; white-space: nowrap; }
+        tr:hover { background: var(--accent-light); }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+        .badge-p1 { background: var(--red-light); color: var(--red); }
+        .badge-p2 { background: var(--orange-light); color: var(--orange); }
+        .badge-p3 { background: var(--yellow-light); color: #92400e; }
+        .badge-p4 { background: #e3f2fd; color: #0d47a1; }
+        .badge-p5 { background: var(--tag); color: var(--muted); }
+        .badge-fora { background: var(--red-light); color: var(--red); }
+        .badge-verificar { background: var(--orange-light); color: var(--orange); }
+        .badge-concentrador { background: var(--purple-light); color: var(--purple); }
+
+        .sla-bar { height: 4px; border-radius: 4px; background: var(--border); margin-top: 3px; width: 100%; }
+        .sla-bar .fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+        .sla-bar .fill.green { background: var(--green); }
+        .sla-bar .fill.yellow { background: var(--yellow); }
+        .sla-bar .fill.red { background: var(--red); }
+        .sla-time { font-size: 11px; font-weight: 600; }
+        .sla-time.verde { color: var(--green); }
+        .sla-time.amarelo { color: #92400e; }
+        .sla-time.estourado { color: var(--red); font-weight: 700; }
+        .sla-date-cell { padding: 3px 8px; border-radius: 5px; font-weight: 600; white-space: nowrap; font-size: 11px; }
+        .sla-date-cell.verde { background: var(--green-light); color: #801515; }
+        .sla-date-cell.amarelo { background: var(--yellow-light); color: #7a5c00; }
+        .sla-date-cell.estourado { background: var(--red-light); color: var(--red); }
+
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+        .chart-box { background: var(--white); padding: 14px; border-radius: var(--r-sm); box-shadow: var(--sh-sm); border: 1px solid var(--border); }
+        .chart-box h4 { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; }
+        .chart-container { position: relative; height: 200px; }
+
+        .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 50px 20px; text-align: center; color: var(--muted); }
+        .empty .empty-ico { font-size: 48px; margin-bottom: 14px; }
+        .empty h3 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+        .empty p { font-size: 13px; color: var(--muted); max-width: 400px; }
+
+        .toolbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: var(--white); border-radius: var(--r-sm); box-shadow: var(--sh-sm); margin-bottom: 12px; }
+        .toolbar-row .label { font-size: 11px; color: var(--muted); font-weight: 600; margin-right: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .btn-export { border-color: var(--accent); color: var(--accent); }
+        .btn-export:hover { background: var(--accent); color: #fff; }
+
+        @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; position: static; } .stats-grid { grid-template-columns: repeat(2, 1fr); } .filter-bar { flex-direction: column; align-items: stretch; } .filter-separator { display: none; } }
+
+        .tooltip { position: relative; }
+        .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 10px; white-space: nowrap; z-index: 100; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+
+        <div class="header">
+            <h1> CSM EXTRATOR TNE <small>v3.0 — Multi-Planilhas</small></h1>
+            <div class="header-actions">
+                <div class="sla-counter"> Dados: <span id="dataStatus" style="color:#69f0ae;">Nenhum</span></div>
+            </div>
+        </div>
+
+        <div class="layout">
+
+            <!-- SIDEBAR -->
+            <div class="sidebar" id="sidebar">
+
+                <div class="upload-card">
+                    <h3> Upload de Planilhas</h3>
+
+                    <label class="upload-slot" id="slotAgendadas" data-type="agendadas">
+                        <button class="slot-clear" id="clearAgendadas" type="button">×</button>
+                        <div class="slot-icon"></div>
+                        <div class="slot-title">📋 Agendadas</div>
+                        <div class="slot-sub">Atividades programadas (TNE_FMMT)</div>
+                        <div class="slot-status waiting" id="statusAgendadas">⏳ Aguardando arquivo</div>
+                        <input type="file" accept=".xlsx,.xls" data-target="agendadas">
+                    </label>
+
+                    <label class="upload-slot" id="slotNaoAgendadas" data-type="naoagendadas">
+                        <button class="slot-clear" id="clearNaoAgendadas" type="button">×</button>
+                        <div class="slot-icon"></div>
+                        <div class="slot-title">⚡ Não Agendadas</div>
+                        <div class="slot-sub">Atividades não programadas</div>
+                        <div class="slot-status waiting" id="statusNaoAgendadas">⏳ Aguardando arquivo</div>
+                        <input type="file" accept=".xlsx,.xls" data-target="naoagendadas">
+                    </label>
+
+                    <div class="upload-slot" id="slotGenesis" data-type="genesis" style="cursor:default;">
+                        <button class="slot-clear" id="clearGenesis" type="button">×</button>
+                        <div class="slot-icon"></div>
+                        <div class="slot-title">🏭 Genesis</div>
+                        <div class="slot-sub">Exportação do sistema Gênesis</div>
+                        <div class="slot-status waiting" id="statusGenesis">⏳ Aguardando texto</div>
+                        <textarea id="genesisTextarea" placeholder="Cole aqui o texto copiado do Gênesis (Ctrl+V)&#10;&#10;Data/Hora&#9;Duração&#9;Tipo&#9;...&#9;NE_ID&#9;END_ID&#9;...&#9;Status&#10;------------------------------------------------------" style="width:100%;height:90px;border:1.5px solid var(--border2);border-radius:8px;padding:8px;font-family:monospace;font-size:10px;color:var(--text);resize:vertical;outline:none;background:var(--bg);line-height:1.4;box-sizing:border-box;margin-top:8px;"></textarea>
+                    </div>
+
+                    <label class="upload-slot" id="slotConcentradores" data-type="concentradores">
+                        <button class="slot-clear" id="clearConcentradores" type="button">×</button>
+                        <div class="slot-icon"></div>
+                        <div class="slot-title">🔗 Concentradores</div>
+                        <div class="slot-sub">Lista de sites concentradores</div>
+                        <div class="slot-status waiting" id="statusConcentradores">⏳ Aguardando arquivo</div>
+                        <input type="file" accept=".xlsx,.xls,.csv,.txt" data-target="concentradores">
+                    </label>
+                </div>
+
+            </div>
+
+            <!-- MAIN -->
+            <div class="main-content">
+
+                <!-- STATS -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card" data-filter="all"><div class="label">📌 Total</div><div class="value" id="totalChamados">0</div><div class="sub">Carregue as planilhas</div></div>
+                    <div class="stat-card p1" data-filter="P1"><div class="label">🔴 P1</div><div class="value" id="totalP1">0</div><div class="sub">Críticos</div></div>
+                    <div class="stat-card p2" data-filter="P2"><div class="label">🟠 P2</div><div class="value" id="totalP2">0</div><div class="sub">Urgentes</div></div>
+                    <div class="stat-card p3" data-filter="P3"><div class="label">🟡 P3</div><div class="value" id="totalP3">0</div><div class="sub">Média</div></div>
+                    <div class="stat-card p4" data-filter="P4"><div class="label">🔵 P4</div><div class="value" id="totalP4">0</div><div class="sub">Baixa</div></div>
+                    <div class="stat-card p5" data-filter="P5"><div class="label">⚪ P5</div><div class="value" id="totalP5">0</div><div class="sub">Mínima</div></div>
+                    <div class="stat-card sla" data-filter="noprazo"><div class="label">✅ No Prazo</div><div class="value" id="totalNoPrazo">0</div><div class="sub">Dentro do SLA</div></div>
+                    <div class="stat-card vencidos" data-filter="vencidos"><div class="label">❌ Vencidos</div><div class="value" id="totalVencidos">0</div><div class="sub">SLA estourado</div></div>
+                </div>
+
+                <!-- CROSS INFO -->
+                <div id="crossInfoBar" style="display:none;padding:6px 16px;background:var(--white);border-radius:var(--r-sm);box-shadow:var(--sh-sm);margin-bottom:12px;font-size:12px;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <span style="font-weight:600;color:var(--text2);">🔗 Cruzamento:</span>
+                    <span id="crossInfoFora" style="color:var(--red);font-weight:600;"></span>
+                    <span id="crossInfoVerificar" style="color:var(--orange);font-weight:600;"></span>
+                    <span id="crossInfoConcentrador" style="color:var(--purple);font-weight:600;"></span>
+                </div>
+
+                <!-- FILTERS -->
+                <div class="filter-bar" id="filterBar">
+                    <span class="filter-label">🗺️ UF:</span>
+                    <button class="filter-btn active" data-filter="all">Todos</button>
+                    <span id="ufFilterContainer"></span>
+                    <div class="filter-separator"></div>
+                    <span class="filter-label">🎯 Prioridade:</span>
+                    <button class="filter-btn" data-filter="P1">P1</button>
+                    <button class="filter-btn" data-filter="P2">P2</button>
+                    <button class="filter-btn" data-filter="P3">P3</button>
+                    <button class="filter-btn" data-filter="P4">P4</button>
+                    <button class="filter-btn" data-filter="P5">P5</button>
+                    <div class="filter-separator"></div>
+                    <span class="filter-label">🔗 Filtro:</span>
+                    <button class="filter-btn" data-filter="cruz-fora">🔴 Fora</button>
+                    <button class="filter-btn" data-filter="cruz-verificar">🟠 Verificar</button>
+                    <button class="filter-btn" data-filter="cruz-concentrador">🟣 Concentrador</button>
+                    <div class="filter-separator"></div>
+                    <span class="filter-label">🏷️ TNE:</span>
+                    <button class="filter-btn" data-filter="tne1">TNE 1</button>
+                    <button class="filter-btn" data-filter="tne2">TNE 2</button>
+                    <div class="filter-separator"></div>
+                    <span class="filter-label">⏱️ SLA:</span>
+                    <button class="filter-btn" data-filter="noprazo">✅ No Prazo</button>
+                    <button class="filter-btn" data-filter="vencidos">❌ Vencidos</button>
+                    <div class="filter-separator"></div>
+                    <button class="filter-btn" id="btnAtualizar" style="background:var(--accent);color:#fff;border-color:var(--accent);">🔄 Atualizar</button>
+                    <div class="filter-separator"></div>
+                    <span class="filter-label">📊 Ordenar:</span>
+                    <button class="filter-btn active" data-sort="uf">UF</button>
+                    <button class="filter-btn" data-sort="prioridade">Prioridade</button>
+                    <button class="filter-btn" data-sort="sla">SLA</button>
+                    <button class="filter-btn" data-sort="falha">Falha</button>
+                    <div class="filter-separator"></div>
+                    <button class="filter-btn" id="resetFilters" style="border-color:var(--red);color:var(--red);">🔄 Reset</button>
+                </div>
+
+                <!-- SEARCH -->
+                <div class="search-bar">
+                    <span class="label">🔍 Buscar:</span>
+                    <input type="text" id="searchInput" placeholder="TSK, NE, END_ID, Cidade, Técnico, Falha, UF..." />
+                </div>
+
+                <!-- TOOLBAR -->
+                <div class="toolbar-row">
+                    <span class="label">📤 Exportar (<span id="exportCount">0</span> registros):</span>
+                    <button class="filter-btn btn-export" id="btnExportXLSX">📊 XLSX</button>
+                    <button class="filter-btn btn-export" id="btnExportCopy">📋 Copiar</button>
+                </div>
+
+                <!-- TABLE -->
+                <div id="mainContent">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                        <h3 style="font-size:16px;font-weight:600;">📋 Chamados</h3>
+                        <span style="font-size:11px;color:var(--muted);">Atualizado: <span id="lastUpdate">--</span> | <span id="rowCount">0</span> registros</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th data-sort="uf">UF</th>
+                                    <th data-sort="tne">TNE</th>
+                                    <th data-sort="tsk">TSK</th>
+                                    <th data-sort="prioridade">Prioridade</th>
+                                    <th data-sort="ne">NE ID</th>
+                                    <th>END_ID</th>
+                                    <th data-sort="falha">Tipo Falha</th>
+                                    <th data-sort="cruzamento">Cruzamento</th>
+                                    <th>SLA (Fim)</th>
+                                    <th>Tempo Restante</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- CHARTS -->
+                    <div class="chart-grid">
+                        <div class="chart-box"><h4>📈 Por UF</h4><div class="chart-container"><canvas id="chartUF"></canvas></div></div>
+                        <div class="chart-box"><h4>📈 Por Prioridade</h4><div class="chart-container"><canvas id="chartPrioridade"></canvas></div></div>
+                        <div class="chart-box"><h4>📈 Motivos de Suspensão</h4><div class="chart-container"><canvas id="chartSuspensao"></canvas></div></div>
+                        <div class="chart-box"><h4>📈 Tipos de Falha</h4><div class="chart-container"><canvas id="chartFalha"></canvas></div></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        //  TNE MAP
+        // ================================================================
+        const TNE_MAP = {
+            'tne1': ['AL', 'BA', 'SE', 'PI'],
+            'tne2': ['PE', 'PB', 'RN', 'CE']
+        };
+
+        function findTNERegion(uf) {
+            if (!uf) return 'N/A';
+            const u = String(uf).trim().toUpperCase();
+            for (const [region, ufs] of Object.entries(TNE_MAP)) {
+                if (ufs.includes(u)) return region.toUpperCase();
+            }
+            return 'N/A';
+        }
+
+        const TNE_LABELS = { tne1: 'TNE 1', tne2: 'TNE 2' };
+
+        // ================================================================
+        //  COLUMN MAPPING
+        // ================================================================
+        const COLUMN_MAP = {
+            TSK: ['Número de Ordem', 'TSK', 'Ordem', 'Ticket'],
+            NE: ['Nome do NE', 'NE', 'NE ID', 'Elemento', 'Network Element'],
+            END_ID: ['END_ID', 'End ID', 'END ID'],
+            CIDADE: ['Cidade'],
+            UF: ['UF', 'Estado'],
+            PRIORIDADE: ['Faixa Priorização Dispatching', 'Prioridade'],
+            STATUS: ['Estado', 'Status'],
+            TECNICO: ['Nome do colaborador do iSOC', 'Técnico', 'Colaborador'],
+            FALHA: ['Descrição da Falha'],
+            SOLUCAO: ['Descrição da Solução'],
+            SUSPENSAO: ['Motivo da Suspensão'],
+            SEGMENTO: ['Segmento de Atendimento'],
+            REPETIDO: ['Repetido'],
+            LAT: ['Latitude XTTS', 'Latitude'],
+            LNG: ['Longitude XTTS', 'Longitude'],
+            CRIACAO: ['Criação do NTT'],
+            SLA_FIM: ['Fim SLA', 'SLA Fim', 'Fim do SLA'],
+            ENTRADA: ['Data/Hora de Entrada no site'],
+            SAIDA: ['Data/Hora de Saída do site'],
+            DURACAO: ['Duração'],
+            TIPO_FALHA: ['Tipo da Falha'],
+            CM: ['CM', 'Regra usuário criador', 'Fila em que está'],
+            BAIRRO: ['Bairro'],
+            NOME_NE: ['Nome do NE'],
+            TITULO_ALARME: ['Título do Alarme'],
+            DIARIO: ['Diário de Trabalho'],
+            NOTA_ABERTURA: ['Nota de Abertura'],
+            PROVEDOR: ['Provedor']
+        };
+
+        // ================================================================
+        //  GLOBALS
+        // ================================================================
+        let dataStore = {
+            agendadas: [],
+            naoagendadas: [],
+            genesis: [],
+            concentradores: []
+        };
+        let combinedData = [];
+        let displayData = [];
+        let charts = {};
+        let selectedPriorities = new Set();
+        let selectedSLA = new Set();
+        let selectedCruzamento = new Set();
+        let selectedUF = new Set();
+        let selectedTNE = null;
+        let searchTerm = '';
+        const PRIORITY_KEYS = ['P1', 'P2', 'P3', 'P4', 'P5'];
+        const SLA_KEYS = ['noprazo', 'vencidos'];
+        const CRUZ_KEYS = ['cruz-fora', 'cruz-verificar', 'cruz-concentrador'];
+        const TNE_KEYS = ['tne1', 'tne2'];
+        let currentSort = 'uf';
+        let sortAsc = true;
+        let _slaInterval = null;
+        let crossCounts = { fora: 0, verificar: 0, concentrador: 0 };
+
+        // ================================================================
+        //  UTILITIES
+        // ================================================================
+        function findColumn(row, possibleNames) {
+            const keys = Object.keys(row);
+            for (const name of possibleNames) {
+                const found = keys.find(k => k.toLowerCase() === name.toLowerCase());
+                if (found) return found;
+            }
+            for (const name of possibleNames) {
+                const found = keys.find(k =>
+                    k.toLowerCase().includes(name.toLowerCase()) ||
+                    name.toLowerCase().includes(k.toLowerCase())
+                );
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function parseSlaData(valor) {
+            if (!valor) return null;
+            const str = String(valor).trim();
+            if (!str) return null;
+            const regex = /^(\d{2})\/(\d{2})\/(\d{2,4})\s+(\d{2}):(\d{2})(?::(\d{2}))?$/;
+            const match = str.match(regex);
+            if (match) {
+                let dia = parseInt(match[1]), mes = parseInt(match[2]) - 1, ano = parseInt(match[3]);
+                let hora = parseInt(match[4]), minuto = parseInt(match[5]), segundo = parseInt(match[6] || 0);
+                if (ano < 100) ano += 2000;
+                const data = new Date(ano, mes, dia, hora, minuto, segundo);
+                if (!isNaN(data.getTime())) return data;
+            }
+            try { const d = new Date(str); if (!isNaN(d.getTime())) return d; } catch (e) {}
+            return null;
+        }
+
+        function parsePriority(p) {
+            if (!p) return 'N/A';
+            const s = String(p).trim();
+            const match = s.match(/P[1-5]/i);
+            if (match) return match[0].toUpperCase();
+            if (s.includes('1') || s.toLowerCase().includes('alta') || s.toLowerCase().includes('crit')) return 'P1';
+            if (s.includes('2') || s.toLowerCase().includes('urg')) return 'P2';
+            if (s.includes('3') || s.toLowerCase().includes('méd') || s.toLowerCase().includes('med')) return 'P3';
+            if (s.includes('4')) return 'P4';
+            if (s.includes('5') || s.toLowerCase().includes('baixa') || s.toLowerCase().includes('min')) return 'P5';
+            return 'N/A';
+        }
+
+        function normalizeEndId(id) {
+            if (!id) return '';
+            return String(id).trim().toUpperCase().replace(/[\s\-_]+/g, '');
+        }
+
+        function getSLAInfo(d) {
+            if (!d.slaFim) return { label: '--', timeLeft: '--', class: 'verde', percent: 100 };
+            const fim = new Date(d.slaFim);
+            if (isNaN(fim)) return { label: 'Data inválida', timeLeft: '--', class: 'estourado', percent: 0 };
+            const agora = new Date();
+            const diff = fim - agora;
+            if (diff > 0) {
+                const hours = Math.floor(diff / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const slaClass = diff > 10800000 ? 'verde' : 'amarelo';
+                return { label: formatDateSLA(d.slaFim), timeLeft: hours + 'h ' + minutes + 'm', class: slaClass, percent: Math.min(100, (diff / 3600000) * 20) };
+            } else {
+                return { label: formatDateSLA(d.slaFim), timeLeft: '⏰ Estourado', class: 'estourado', percent: 0 };
+            }
+        }
+
+        function formatDateSLA(dateStr) {
+            if (!dateStr) return '--';
+            const d = new Date(dateStr);
+            if (isNaN(d)) return 'Data inválida';
+            return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        // ================================================================
+        //  PARSE GENESIS TEXT
+        // ================================================================
+        function parseGenesisText(text) {
+            const lines = text.split(/\r?\n/).filter(l => l.trim());
+            if (lines.length < 2) return [];
+
+            let headerIdx = -1;
+            for (let i = 0; i < Math.min(lines.length, 10); i++) {
+                const lower = lines[i].toLowerCase();
+                if ((lower.includes('data/hora') || lower.includes('datahora') || lower.includes('ne_id')) &&
+                    (lower.includes('end_id') || lower.includes('tecnologia'))) {
+                    headerIdx = i;
+                    break;
+                }
+            }
+            if (headerIdx === -1) headerIdx = 0;
+
+            const headers = lines[headerIdx].split('\t').map(h => h.trim());
+            const data = [];
+
+            for (let i = headerIdx + 1; i < lines.length; i++) {
+                const cols = lines[i].split('\t');
+                if (cols.length < 3) continue;
+                const row = {};
+                headers.forEach((h, idx) => {
+                    row[h] = (cols[idx] || '').trim();
+                });
+
+                const ne_id = row['NE_ID'] || row['NE ID'] || row['Ne Id'] || '';
+                const end_id = row['END_ID'] || row['End ID'] || row['End ID'] || '';
+                const cidadeUf = row['Cidade/UF'] || row['Cidade'] || '';
+                const [cidade, uf] = cidadeUf.includes('/') ? cidadeUf.split('/').map(s => s.trim()) : [cidadeUf, ''];
+
+                const obj = {
+                    tsk: end_id || ne_id || 'N/I',
+                    ne: ne_id || 'N/I',
+                    end_id: end_id || 'N/I',
+                    end_id_norm: normalizeEndId(end_id || ne_id),
+                    cidade: cidade || '',
+                    uf: uf || '',
+                    prioridade: 'N/A',
+                    status: row['Status'] || 'Desconhecido',
+                    tecnico: 'Não atribuído',
+                    falha: row['Observação'] || 'Sem descrição',
+                    solucao: '',
+                    suspensao: 'Nenhuma',
+                    segmento: 'Outro',
+                    repetido: false,
+                    lat: null,
+                    lng: null,
+                    criacao: row['Data/Hora'] || '',
+                    slaFim: '',
+                    entrada: '',
+                    saida: '',
+                    duracao: row['Duração'] || '',
+                    tipoFalha: row['Classif. Infra'] || row['Tecnologia'] || 'Não classificado',
+                    regra: 'Sem fila',
+                    uf: uf || '',
+                    tne: findTNERegion(uf),
+                    provedor: '',
+                    bairro: '',
+                    nome_ne: '',
+                    titulo_alarme: '',
+                    diario: '',
+                    nota_abertura: '',
+                    origem: 'genesis',
+                    cruzamento: '—',
+                    _preprocessed: true
+                };
+                data.push(obj);
+            }
+            return data;
+        }
+
+        // ================================================================
+        //  PROCESS ROW
+        // ================================================================
+        function processRow(row) {
+            const colMap = {};
+            const sample = row;
+            for (const [key, names] of Object.entries(COLUMN_MAP)) {
+                colMap[key] = findColumn(sample, names);
+            }
+
+            const get = (key) => {
+                const col = colMap[key];
+                return col ? String(row[col] || '').trim() : '';
+            };
+
+            let slaFim = get('SLA_FIM');
+            if (!slaFim) {
+                const colSLA = findColumn(row, ['Fim SLA', 'SLA Fim', 'Fim do SLA']);
+                if (colSLA) slaFim = String(row[colSLA] || '').trim();
+            }
+            if (slaFim && !isNaN(slaFim) && slaFim.length > 0) {
+                const excelDate = parseFloat(slaFim);
+                if (excelDate > 0 && excelDate < 100000) {
+                    const date = new Date((excelDate - 25569) * 86400 * 1000);
+                    if (!isNaN(date)) slaFim = date.toISOString();
+                }
+            }
+            if (slaFim && typeof slaFim === 'string' && !slaFim.includes('T')) {
+                const parsed = parseSlaData(slaFim);
+                if (parsed) slaFim = parsed.toISOString();
+            }
+
+            let ne = get('NE');
+            if (!ne) {
+                const colNE = findColumn(row, ['NE ID', 'NE', 'Nome do NE', 'Elemento']);
+                if (colNE) ne = String(row[colNE] || '').trim();
+            }
+
+            let end_id = get('END_ID');
+            if (!end_id) {
+                const colEND = findColumn(row, ['END_ID', 'End ID', 'END ID']);
+                if (colEND) end_id = String(row[colEND] || '').trim();
+            }
+
+            let tipoFalha = get('TIPO_FALHA');
+            if (!tipoFalha) {
+                const colTF = findColumn(row, ['Tipo da Falha']);
+                if (colTF) tipoFalha = String(row[colTF] || '').trim();
+            }
+            if (!tipoFalha) {
+                const colDesc = findColumn(row, ['Descrição da Falha']);
+                if (colDesc) tipoFalha = String(row[colDesc] || '').trim();
+            }
+            if (!tipoFalha) {
+                const colTitulo = findColumn(row, ['Título do Alarme']);
+                if (colTitulo) tipoFalha = String(row[colTitulo] || '').trim();
+            }
+
+            let uf = get('UF');
+            if (!uf) {
+                const colUF = findColumn(row, ['UF', 'Estado']);
+                if (colUF) uf = String(row[colUF] || '').trim();
+            }
+
+            return {
+                tsk: get('TSK') || 'N/I',
+                ne: ne || 'N/I',
+                end_id: end_id || 'N/I',
+                end_id_norm: normalizeEndId(end_id),
+                cidade: get('CIDADE') || '',
+                uf: uf || '',
+                tne: findTNERegion(uf),
+                prioridade: parsePriority(get('PRIORIDADE')),
+                status: get('STATUS') || 'Desconhecido',
+                tecnico: get('TECNICO') || 'Não atribuído',
+                falha: get('FALHA') || 'Sem descrição',
+                solucao: get('SOLUCAO') || '',
+                suspensao: get('SUSPENSAO') || 'Nenhuma',
+                segmento: get('SEGMENTO') || 'Outro',
+                repetido: get('REPETIDO') === 'Repetido' || get('REPETIDO') === 'Sim',
+                lat: parseFloat(get('LAT')) || null,
+                lng: parseFloat(get('LNG')) || null,
+                criacao: get('CRIACAO'),
+                slaFim: slaFim || '',
+                entrada: get('ENTRADA'),
+                saida: get('SAIDA'),
+                duracao: get('DURACAO'),
+                tipoFalha: tipoFalha || 'Não classificado',
+                regra: get('CM') || 'Sem fila',
+                provedor: get('PROVEDOR') || '',
+                bairro: get('BAIRRO') || '',
+                nome_ne: get('NOME_NE') || '',
+                titulo_alarme: get('TITULO_ALARME') || '',
+                diario: get('DIARIO') || '',
+                nota_abertura: get('NOTA_ABERTURA') || '',
+                origem: 'genesis',
+                cruzamento: '—'
+            };
+        }
+
+        // ================================================================
+        //  LOAD FILE
+        // ================================================================
+        function loadFile(file, target) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+                        if (json.length === 0) { reject(new Error('Planilha vazia')); return; }
+
+                        if (target === 'concentradores') {
+                            const concField = findColumn(json[0], ['Número de Ordem', 'TSK', 'Ordem', 'Ticket', 'u_ne_ids', 'ne_ids', 'ID', 'NE ID', 'END_ID', 'end_id', 'id']);
+                            console.log('[concentradores] Colunas:', Object.keys(json[0]), '→ campo usado:', concField);
+                            const ids = json.map(row => {
+                                const val = concField ? String(row[concField] || '').trim() : '';
+                                return normalizeEndId(val);
+                            }).filter(Boolean);
+                            dataStore.concentradores = ids;
+                            updateSlotStatus('concentradores', true, ids.length + ' IDs');
+                            console.log('[concentradores] Carregado:', ids.length, 'IDs, amostra:', ids.slice(0, 5));
+                            resolve(ids);
+                        } else {
+                            dataStore[target] = json;
+                            updateSlotStatus(target, true, json.length + ' registros, ' + Object.keys(json[0]).length + ' colunas');
+                            console.log('[' + target + '] Carregado:', json.length, 'linhas, colunas:', Object.keys(json[0]));
+                            resolve(json);
+                        }
+                        checkCrossData();
+                    } catch (err) { reject(err); }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function updateSlotStatus(type, loaded, info) {
+            const slot = document.getElementById('slot' + type.charAt(0).toUpperCase() + type.slice(1));
+            const status = document.getElementById('status' + type.charAt(0).toUpperCase() + type.slice(1));
+            if (!slot || !status) return;
+            if (loaded) {
+                slot.classList.add('loaded');
+                status.className = 'slot-status ok';
+                status.textContent = '✅ ' + info;
+            } else {
+                slot.classList.remove('loaded');
+                status.className = 'slot-status waiting';
+                const waitingText = type === 'genesis' ? '⏳ Aguardando texto' : '⏳ Aguardando arquivo';
+                status.textContent = waitingText;
+            }
+        }
+
+        // ================================================================
+        //  CROSS-REFERENCE ENGINE
+        // ================================================================
+        function checkCrossData() {
+            const hasAgendadas = dataStore.agendadas.length > 0;
+            const hasNaoAgendadas = dataStore.naoagendadas.length > 0;
+            const hasGenesis = dataStore.genesis.length > 0;
+
+            if (hasAgendadas || hasNaoAgendadas || hasGenesis) {
+                rebuildCombinedData();
+            }
+        }
+
+        function rebuildCombinedData() {
+            combinedData = [];
+            const seenEndIds = {};
+            const concSet = new Set((dataStore.concentradores || []).map(id => normalizeEndId(id)));
+            const sources = [
+                { data: dataStore.agendadas, name: 'agendadas' },
+                { data: dataStore.naoagendadas, name: 'naoagendadas' },
+                { data: dataStore.genesis, name: 'genesis' }
+            ];
+
+            sources.forEach(src => {
+                if (!src.data.length) return;
+                src.data.forEach(row => {
+                    const item = row._preprocessed ? row : processRow(row);
+                    item.origem = item.origem || src.name;
+                    const key = item.tsk + '|' + item.end_id;
+                    if (seenEndIds[key]) return;
+                    seenEndIds[key] = true;
+                    if (concSet.has(normalizeEndId(item.tsk)) || concSet.has(item.end_id_norm) || concSet.has(normalizeEndId(item.ne))) {
+                        item.cruzamento = 'concentrador';
+                    }
+                    combinedData.push(item);
+                });
+            });
+
+            console.log('📊 Dados combinados:', combinedData.length, 'registros');
+            buildCrossReference();
+            if (combinedData.length > 0) processCombinedData();
+        }
+
+        function buildCrossReference() {
+            const hasGenesis = dataStore.genesis.length > 0;
+            const concSet = new Set((dataStore.concentradores || []).map(id => normalizeEndId(id)));
+
+            const genesisMap = {};
+            (dataStore.genesis || []).forEach(row => {
+                const item = row._preprocessed ? row : processRow(row);
+                if (item.end_id_norm) genesisMap[item.end_id_norm] = true;
+                if (item.ne) genesisMap[normalizeEndId(item.ne)] = true;
+                if (item.tsk) genesisMap[normalizeEndId(item.tsk)] = true;
+            });
+
+            crossCounts = { fora: 0, verificar: 0, concentrador: 0 };
+
+            combinedData.forEach(item => {
+                const eid = item.end_id_norm;
+                const inConc = concSet.has(normalizeEndId(item.tsk)) || concSet.has(eid) || concSet.has(normalizeEndId(item.ne));
+                const inGenesis = genesisMap[eid] || genesisMap[normalizeEndId(item.ne)] || genesisMap[normalizeEndId(item.tsk)];
+
+                if (inConc) { item.cruzamento = 'concentrador'; item.isConcentrador = true; crossCounts.concentrador++; }
+                else { item.isConcentrador = false; }
+
+                if (item.cruzamento !== 'concentrador') {
+                    if (!hasGenesis) { item.cruzamento = '—'; }
+                    else if (inGenesis) { item.cruzamento = 'fora'; crossCounts.fora++; }
+                    else { item.cruzamento = 'verificar'; crossCounts.verificar++; }
+                }
+            });
+
+        }
+
+        // ================================================================
+        //  PROCESS COMBINED DATA
+        // ================================================================
+        function updateCrossInfo() {
+            const bar = document.getElementById('crossInfoBar');
+            if (!bar) return;
+            const hasData = combinedData.length > 0 && crossCounts.fora + crossCounts.verificar + crossCounts.concentrador > 0;
+            bar.style.display = hasData ? 'flex' : 'none';
+            if (hasData) {
+                document.getElementById('crossInfoFora').textContent = '🔴 Fora: ' + crossCounts.fora;
+                document.getElementById('crossInfoVerificar').textContent = '🟠 Verificar: ' + crossCounts.verificar;
+                document.getElementById('crossInfoConcentrador').textContent = '🟣 Concentrador: ' + crossCounts.concentrador;
+            }
+        }
+
+        function processCombinedData() {
+            updateCrossInfo();
+            updateUFFilters();
+            applyFiltersAndSort();
+            updateStats();
+            updateCharts();
+            refreshFilterButtonStates();
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+            document.getElementById('dataStatus').textContent = combinedData.length + ' registros';
+            if (!_slaInterval) {
+                _slaInterval = setInterval(updateSLATime, 10000);
+            }
+            updateSLATime();
+        }
+
+        // ================================================================
+        //  UF FILTER BUTTONS
+        // ================================================================
+        function updateUFFilters() {
+            const container = document.getElementById('ufFilterContainer');
+            if (!container) return;
+            const ufs = new Set(combinedData.map(d => d.uf).filter(Boolean));
+            if (ufs.size === 0) { container.innerHTML = ''; return; }
+            const sorted = Array.from(ufs).sort();
+            container.innerHTML = sorted.map(uf =>
+                '<button class="filter-btn' + (selectedUF.has(uf) ? ' active' : '') + '" data-uf="' + uf + '">' + uf + '</button>'
+            ).join(' ');
+            container.querySelectorAll('[data-uf]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const uf = this.dataset.uf;
+                    if (selectedUF.has(uf)) selectedUF.delete(uf);
+                    else selectedUF.add(uf);
+                    this.classList.toggle('active');
+                    applyFiltersAndSort(); updateStats(); updateCharts();
+                });
+            });
+        }
+
+        // ================================================================
+        //  FILTERS & SORT
+        // ================================================================
+        function applyFiltersAndSort() {
+            let data = [...combinedData];
+
+            if (selectedPriorities.size > 0) {
+                data = data.filter(d => selectedPriorities.has(d.prioridade));
+            }
+
+            if (selectedSLA.size === 1) {
+                if (selectedSLA.has('vencidos')) {
+                    data = data.filter(d => d.slaFim && !isNaN(new Date(d.slaFim)) && new Date(d.slaFim) < new Date());
+                } else if (selectedSLA.has('noprazo')) {
+                    data = data.filter(d => !d.slaFim || isNaN(new Date(d.slaFim)) || new Date(d.slaFim) >= new Date());
+                }
+            }
+
+            if (selectedCruzamento.size > 0) {
+                data = data.filter(d => selectedCruzamento.has(d.cruzamento));
+            }
+
+            if (selectedUF.size > 0) {
+                data = data.filter(d => selectedUF.has(d.uf));
+            }
+
+            if (selectedTNE) {
+                const allowedUF = TNE_MAP[selectedTNE] || [];
+                if (allowedUF.length > 0) {
+                    data = data.filter(d => allowedUF.includes(d.uf));
+                }
+            }
+
+            if (searchTerm.length > 0) {
+                const term = searchTerm.toLowerCase();
+                data = data.filter(d =>
+                    d.tsk.toLowerCase().includes(term) ||
+                    d.ne.toLowerCase().includes(term) ||
+                    d.end_id.toLowerCase().includes(term) ||
+                    d.cidade.toLowerCase().includes(term) ||
+                    d.tecnico.toLowerCase().includes(term) ||
+                    d.tipoFalha.toLowerCase().includes(term) ||
+                    d.uf.toLowerCase().includes(term) ||
+                    d.bairro.toLowerCase().includes(term)
+                );
+            }
+
+            const sortOrder = sortAsc ? 1 : -1;
+            data.sort((a, b) => {
+                let valA, valB;
+                switch (currentSort) {
+                    case 'uf': valA = a.uf || ''; valB = b.uf || ''; break;
+                    case 'tne':
+                        const tneOrder = { 'TNE1': 1, 'TNE2': 2, 'N/A': 3 };
+                        valA = tneOrder[a.tne] || 99; valB = tneOrder[b.tne] || 99;
+                        break;
+                    case 'prioridade':
+                        const pOrder = { 'P1': 1, 'P2': 2, 'P3': 3, 'P4': 4, 'P5': 5, 'N/A': 6 };
+                        valA = pOrder[a.prioridade] || 99; valB = pOrder[b.prioridade] || 99;
+                        break;
+                    case 'sla':
+                        const getSla = (d) => { if (!d.slaFim) return Infinity; const dt = new Date(d.slaFim); return isNaN(dt) ? Infinity : dt - new Date(); };
+                        return (getSla(a) - getSla(b)) * sortOrder;
+                    case 'falha': valA = a.tipoFalha || ''; valB = b.tipoFalha || ''; break;
+                    case 'tsk': valA = a.tsk || ''; valB = b.tsk || ''; break;
+                    case 'ne': valA = a.ne || ''; valB = b.ne || ''; break;
+                    case 'cruzamento': valA = a.cruzamento || ''; valB = b.cruzamento || ''; break;
+                    default: valA = a.uf || ''; valB = b.uf || '';
+                }
+                if (valA < valB) return -1 * sortOrder;
+                if (valA > valB) return 1 * sortOrder;
+                return 0;
+            });
+
+            displayData = data;
+            updateTable();
+            document.getElementById('rowCount').textContent = displayData.length;
+            const ec = document.getElementById('exportCount');
+            if (ec) ec.textContent = displayData.length;
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            const data = displayData.slice(0, 100);
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted);">Nenhum chamado encontrado. Faça upload das planilhas.</td></tr>';
+                return;
+            }
+            const ufColors = {
+                'AL': ['#e3f2fd','#0d47a1'], 'BA': ['#e8f5e9','#1b5e20'],
+                'SE': ['#fff3e0','#e65100'], 'PI': ['#fce4ec','#880e4f'],
+                'PE': ['#f3e5f5','#4a148c'], 'PB': ['#e0f7fa','#00695c'],
+                'RN': ['#fff8e1','#f57f17'], 'CE': ['#e8eaf6','#283593']
+            };
+            const tneColors = { 'TNE1': ['#f3e5f5','#6a1b9a'], 'TNE2': ['#e0f2f1','#00695c'] };
+            const defBg = '#f0f0f5', defColor = '#333336';
+
+            tbody.innerHTML = data.map(d => {
+                const pc = d.prioridade === 'P1' ? 'badge-p1' : d.prioridade === 'P2' ? 'badge-p2' :
+                    d.prioridade === 'P3' ? 'badge-p3' : d.prioridade === 'P4' ? 'badge-p4' : 'badge-p5';
+                const sla = getSLAInfo(d);
+                const statusBadge = d.status.toLowerCase().includes('não iniciado') ?
+                    '<span style="color:var(--orange);font-weight:600;">⏳ Não Iniciado</span>' : d.status;
+                const uCol = ufColors[d.uf] || [defBg, defColor];
+                const tCol = tneColors[d.tne] || [defBg, defColor];
+                const isConc = d.isConcentrador || d.cruzamento === 'concentrador';
+                const tskColor = isConc ? '#b91c1c' : 'inherit';
+                const tskDisplay = '<strong style="font-size:11px;color:' + tskColor + ';">' + d.tsk + '</strong>';
+
+                const cruzLabel = { 'fora': '🔴 Fora', 'verificar': '🟠 Verificando', 'concentrador': '🟣 Concentrador', '—': '—' };
+                const cruzClass = { 'fora': 'badge-fora', 'verificar': 'badge-verificar', 'concentrador': 'badge-concentrador' };
+                const cruzHtml = d.cruzamento && d.cruzamento !== '—'
+                    ? '<span class="badge ' + (cruzClass[d.cruzamento] || '') + '">' + (cruzLabel[d.cruzamento] || d.cruzamento) + '</span>'
+                    : '<span style="color:var(--muted);">—</span>';
+
+                return '<tr' + (isConc ? ' class="row-concentrador"' : '') + '>' +
+                    '<td><span style="font-size:11px;font-weight:600;background:' + uCol[0] + ';color:' + uCol[1] + ';padding:2px 10px;border-radius:10px;display:inline-block;">' + d.uf + '</span></td>' +
+                    '<td><span style="font-size:11px;font-weight:600;background:' + tCol[0] + ';color:' + tCol[1] + ';padding:2px 10px;border-radius:10px;display:inline-block;">' + (d.tne || '—') + '</span></td>' +
+                    '<td>' + tskDisplay + '</td>' +
+                    '<td><span class="badge ' + pc + '">' + d.prioridade + '</span></td>' +
+                    '<td><code style="font-size:11px;">' + d.ne + '</code></td>' +
+                    '<td><code style="font-size:11px;">' + d.end_id + '</code></td>' +
+                    '<td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + d.tipoFalha + '">' + d.tipoFalha + '</td>' +
+                    '<td>' + cruzHtml + '</td>' +
+                    '<td><span class="sla-date-cell ' + sla.class + '">' + sla.label + '</span></td>' +
+                    '<td><div class="sla-time ' + sla.class + '">' + sla.timeLeft + '</div><div class="sla-bar"><div class="fill ' + (sla.class === 'estourado' ? 'red' : sla.class) + '" style="width:' + sla.percent + '%;"></div></div></td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        // ================================================================
+        //  STATS
+        // ================================================================
+        function updateStats() {
+            const total = combinedData.length;
+            const p1 = combinedData.filter(d => d.prioridade === 'P1').length;
+            const p2 = combinedData.filter(d => d.prioridade === 'P2').length;
+            const p3 = combinedData.filter(d => d.prioridade === 'P3').length;
+            const p4 = combinedData.filter(d => d.prioridade === 'P4').length;
+            const p5 = combinedData.filter(d => d.prioridade === 'P5' || d.prioridade === 'N/A').length;
+            const comSLA = combinedData.filter(d => d.slaFim && !isNaN(new Date(d.slaFim)));
+            const vencidos = comSLA.filter(d => new Date(d.slaFim) < new Date());
+            const noPrazo = comSLA.filter(d => new Date(d.slaFim) >= new Date());
+
+            document.getElementById('totalChamados').textContent = total;
+            document.getElementById('totalP1').textContent = p1;
+            document.getElementById('totalP2').textContent = p2;
+            document.getElementById('totalP3').textContent = p3;
+            document.getElementById('totalP4').textContent = p4;
+            document.getElementById('totalP5').textContent = p5;
+            document.getElementById('totalNoPrazo').textContent = noPrazo.length;
+            document.getElementById('totalVencidos').textContent = vencidos.length;
+        }
+
+        function updateSLATime() {
+            const el = document.getElementById('slaTime');
+            if (!el) return;
+            const agora = new Date();
+            let nearest = null, nearestDiff = Infinity;
+            combinedData.forEach(d => {
+                if (d.slaFim) { const fim = new Date(d.slaFim); if (!isNaN(fim)) { const diff = fim - agora; if (diff > 0 && diff < nearestDiff) { nearestDiff = diff; nearest = d; } } }
+            });
+            if (nearest) {
+                const hours = Math.floor(nearestDiff / 3600000);
+                const minutes = Math.floor((nearestDiff % 3600000) / 60000);
+                el.textContent = hours + 'h ' + minutes + 'm (' + nearest.tsk + ')';
+            } else { el.textContent = '--'; }
+        }
+
+        // ================================================================
+        //  CHARTS
+        // ================================================================
+        function updateCharts() {
+            const ufCount = {};
+            combinedData.forEach(d => { const u = d.uf || 'N/A'; ufCount[u] = (ufCount[u] || 0) + 1; });
+            const sortedUF = Object.keys(ufCount).sort((a, b) => ufCount[b] - ufCount[a]);
+            const uc = ['#cf5f00','#801515','#c2410c','#92400e','#7c3aed','#00695c','#0d47a1','#4a148c','#1b5e20','#283593'];
+            createChart('chartUF', 'bar', sortedUF, sortedUF.map(u => ufCount[u]), uc);
+
+            const pc = {};
+            combinedData.forEach(d => { const p = d.prioridade; pc[p] = (pc[p] || 0) + 1; });
+            const pOrder = ['P1','P2','P3','P4','P5','N/A'];
+            const pLabels = pOrder.filter(p => pc[p]);
+            const pColors = ['#b91c1c','#c2410c','#92400e','#64b5f6','#94a3b8','#d1d1d6'];
+            createChart('chartPrioridade', 'bar', pLabels, pLabels.map(p => pc[p]), pColors);
+
+            const sc = {};
+            combinedData.forEach(d => { const s = d.suspensao || 'Nenhuma'; sc[s] = (sc[s] || 0) + 1; });
+            const sortedSusp = Object.keys(sc).sort((a, b) => sc[b] - sc[a]).slice(0, 8);
+            createChart('chartSuspensao', 'bar', sortedSusp, sortedSusp.map(s => sc[s]), '#7c3aed');
+
+            const fc = {};
+            combinedData.forEach(d => { const f = d.tipoFalha || 'Não classificado'; fc[f] = (fc[f] || 0) + 1; });
+            const sortedFalha = Object.keys(fc).sort((a, b) => fc[b] - fc[a]).slice(0, 8);
+            createChart('chartFalha', 'bar', sortedFalha, sortedFalha.map(f => fc[f]), '#b91c1c');
+        }
+
+        function createChart(id, type, labels, data, colors) {
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (charts[id]) charts[id].destroy();
+            const colorArray = Array.isArray(colors) ? colors : [colors];
+            charts[id] = new Chart(ctx, {
+                type: type,
+                data: { labels: labels, datasets: [{ label: 'Quantidade', data: data, backgroundColor: colorArray.map(c => c + '80'), borderColor: colorArray, borderWidth: 1 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: labels.length < 8, position: 'bottom' } },
+                    scales: type === 'doughnut' ? undefined : { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        }
+
+        // ================================================================
+        //  FILTER EVENTS
+        // ================================================================
+        function toggleSet(set, val) { if (set.has(val)) set.delete(val); else set.add(val); }
+
+        function handleFilterToggle(val) {
+            if (val === 'all') { selectedUF.clear(); updateUFFilters(); selectedPriorities.clear(); selectedCruzamento.clear(); selectedTNE = null; }
+            else if (PRIORITY_KEYS.includes(val)) { toggleSet(selectedPriorities, val); }
+            else if (SLA_KEYS.includes(val)) { toggleSet(selectedSLA, val); }
+            else if (CRUZ_KEYS.includes(val)) {
+                const map = { 'cruz-fora': 'fora', 'cruz-verificar': 'verificar', 'cruz-concentrador': 'concentrador' };
+                toggleSet(selectedCruzamento, map[val]);
+            } else if (TNE_KEYS.includes(val)) {
+                if (selectedTNE === val) selectedTNE = null;
+                else selectedTNE = val;
+            }
+            refreshFilterButtonStates();
+            applyFiltersAndSort(); updateStats(); updateCharts();
+        }
+
+        function refreshFilterButtonStates() {
+            document.querySelectorAll('.filter-btn[data-filter]').forEach(b => {
+                const v = b.dataset.filter;
+                let isActive = false;
+                if (v === 'all') isActive = selectedUF.size === 0 && selectedPriorities.size === 0 && selectedTNE === null;
+                else if (PRIORITY_KEYS.includes(v)) isActive = selectedPriorities.has(v);
+                else if (SLA_KEYS.includes(v)) isActive = selectedSLA.has(v);
+                else if (CRUZ_KEYS.includes(v)) {
+                    const map = { 'cruz-fora': 'fora', 'cruz-verificar': 'verificar', 'cruz-concentrador': 'concentrador' };
+                    isActive = selectedCruzamento.has(map[v]);
+                } else if (TNE_KEYS.includes(v)) isActive = selectedTNE === v;
+                b.classList.toggle('active', isActive);
+                if (PRIORITY_KEYS.includes(v)) b.classList.toggle(v.toLowerCase() + '-active', isActive);
+                if (SLA_KEYS.includes(v)) b.classList.toggle(v + '-active', isActive);
+                if (CRUZ_KEYS.includes(v)) b.classList.toggle(v.replace('cruz-', '') + '-active', isActive);
+                if (TNE_KEYS.includes(v)) b.classList.toggle(v + '-active', isActive);
+            });
+            document.querySelectorAll('.stat-card[data-filter]').forEach(card => {
+                const v = card.dataset.filter;
+                let isActive = false;
+                if (v === 'all') isActive = selectedPriorities.size === 0 && selectedUF.size === 0 && selectedSLA.size === 0;
+                else if (PRIORITY_KEYS.includes(v)) isActive = selectedPriorities.has(v);
+                else if (SLA_KEYS.includes(v)) isActive = selectedSLA.has(v);
+                card.classList.toggle('active-filter', isActive);
+            });
+        }
+
+        document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+            btn.addEventListener('click', function() { handleFilterToggle(this.dataset.filter); });
+        });
+
+        document.querySelectorAll('.filter-btn[data-sort]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (currentSort === this.dataset.sort) sortAsc = !sortAsc;
+                else { currentSort = this.dataset.sort; sortAsc = true; }
+                document.querySelectorAll('.filter-btn[data-sort]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                applyFiltersAndSort();
+            });
+        });
+
+        document.getElementById('resetFilters').addEventListener('click', function() {
+            selectedUF.clear(); selectedPriorities.clear(); selectedSLA.clear(); selectedCruzamento.clear(); selectedTNE = null;
+            searchTerm = '';
+            document.getElementById('searchInput').value = '';
+            currentSort = 'uf'; sortAsc = true;
+            updateUFFilters();
+            refreshFilterButtonStates();
+            document.querySelectorAll('.filter-btn[data-sort]').forEach(b => b.classList.remove('active'));
+            document.querySelector('.filter-btn[data-sort="uf"]').classList.add('active');
+            applyFiltersAndSort(); updateStats(); updateCharts();
+        });
+
+        // ================================================================
+        //  SEARCH
+        // ================================================================
+        document.getElementById('searchInput').addEventListener('input', function() {
+            searchTerm = this.value;
+            if (!combinedData.length) return;
+            applyFiltersAndSort(); updateStats(); updateCharts();
+        });
+
+        // ================================================================
+        //  FILE UPLOAD HANDLERS
+        // ================================================================
+        document.querySelectorAll('.upload-slot input[type="file"]').forEach(input => {
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const target = this.dataset.target;
+                loadFile(file, target).then(() => {
+                    checkCrossData();
+                }).catch(err => {
+                    alert('Erro ao carregar ' + target + ': ' + err.message);
+                    updateSlotStatus(target, false);
+                });
+            });
+        });
+
+        document.querySelectorAll('.slot-clear').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const parent = this.closest('.upload-slot');
+                const type = parent.dataset.type;
+                dataStore[type] = type === 'concentradores' ? [] : [];
+                const input = parent.querySelector('input[type="file"]');
+                if (input) input.value = '';
+                const ta = parent.querySelector('textarea');
+                if (ta) ta.value = '';
+                updateSlotStatus(type, false);
+                if (type !== 'concentradores') {
+                    checkCrossData();
+                } else {
+                    rebuildCombinedData();
+                }
+            });
+        });
+
+        // Genesis textarea paste handler
+        const genesisTa = document.getElementById('genesisTextarea');
+        if (genesisTa) {
+            genesisTa.addEventListener('input', function() {
+                const text = this.value;
+                if (!text.trim()) {
+                    dataStore.genesis = [];
+                    updateSlotStatus('genesis', false);
+                    checkCrossData();
+                    return;
+                }
+                const parsed = parseGenesisText(text);
+                if (parsed.length > 0) {
+                    dataStore.genesis = parsed;
+                    updateSlotStatus('genesis', true, parsed.length + ' registros');
+                    checkCrossData();
+                } else {
+                    dataStore.genesis = [];
+                    updateSlotStatus('genesis', false);
+                }
+            });
+        }
+
+        // ================================================================
+        //  EXPORT
+        // ================================================================
+        function getExportRows() {
+            return displayData.map(d => {
+                const sla = getSLAInfo(d);
+                return {
+                    'UF': d.uf, 'TNE': d.tne, 'TSK': d.tsk, 'Prioridade': d.prioridade,
+                    'NE ID': d.ne, 'END_ID': d.end_id, 'Tipo da Falha': d.tipoFalha,
+                    'SLA (Fim)': sla.label, 'Tempo Restante': sla.timeLeft,
+                    'Status': d.status, 'Cruzamento': d.cruzamento
+                };
+            });
+        }
+
+        function exportXLSX() {
+            const rows = getExportRows();
+            if (!rows.length) { alert('Nenhum registro para exportar.'); return; }
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Relatorio_TNE');
+            const ts = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+            XLSX.writeFile(wb, 'relatorio_TNE_' + ts + '.xlsx');
+        }
+
+        function exportCopyText() {
+            const rows = getExportRows();
+            if (!rows.length) { alert('Nenhum registro para copiar.'); return; }
+            const headers = Object.keys(rows[0]);
+            const lines = [headers.join('\t')];
+            rows.forEach(r => lines.push(headers.map(h => String(r[h] ?? '')).join('\t')));
+            const text = lines.join('\n');
+            const btn = document.getElementById('btnExportCopy');
+            const original = btn.textContent;
+            const done = function() { btn.textContent = '✅ Copiado!'; setTimeout(function() { btn.textContent = original; }, 1800); };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(function() { alert('Copie manualmente:\n\n' + text); });
+            } else { alert('Copie manualmente:\n\n' + text); }
+        }
+
+        document.getElementById('btnExportXLSX').addEventListener('click', exportXLSX);
+        document.getElementById('btnExportCopy').addEventListener('click', exportCopyText);
+
+        // ================================================================
+        //  STAT CARD CLICK
+        // ================================================================
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const filter = this.dataset.filter;
+                if (filter) handleFilterToggle(filter);
+            });
+        });
+
+        // ================================================================
+        //  ATUALIZAR
+        // ================================================================
+        document.getElementById('btnAtualizar').addEventListener('click', function() {
+            applyFiltersAndSort(); updateStats(); updateSLATime();
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+            const original = this.textContent;
+            this.textContent = '✅ Atualizado';
+            setTimeout(function() { this.textContent = original; }.bind(this), 1200);
+        });
+
+        // ================================================================
+        //  DRAG & DROP SUPPORT
+        // ================================================================
+        document.querySelectorAll('.upload-slot[data-type]:not([data-type="genesis"])').forEach(slot => {
+            slot.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('drag-over'); });
+            slot.addEventListener('dragleave', function(e) { this.classList.remove('drag-over'); });
+            slot.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+                const fileInput = this.querySelector('input[type="file"]');
+                if (fileInput && e.dataTransfer.files.length > 0) {
+                    const dt = new DataTransfer();
+                    dt.items.add(e.dataTransfer.files[0]);
+                    fileInput.files = dt.files;
+                    fileInput.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+
+        // ================================================================
+        //  INIT
+        // ================================================================
+        console.log('🚀 CSM EXTRATOR TNE v3.0');
+        console.log('💡 Faça upload das 4 planilhas');
+        console.log('📊 Genesis → Cruzamento automático (não está no Genesis = Verificar, está no Genesis = Fora)');
+        console.log('🏭 Concentradores → Marcação automática');
+        console.log('🗺️ TNE1: AL, BA, SE, PI | TNE2: PE, PB, RN, CE');
+    </script>
+</body>
+</html>
