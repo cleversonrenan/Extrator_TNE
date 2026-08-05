@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSM Dashboard — TNE</title>
+
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/cards.css">
+<link rel="stylesheet" href="css/tables.css">
+<link rel="stylesheet" href="css/charts.css">
+<link rel="stylesheet" href="css/upload.css">
+<link rel="stylesheet" href="css/modal.css">
+<link rel="stylesheet" href="css/theme.css">
+
+<!-- SheetJS: única lib externa usada, conforme prompt mestre (sem frameworks pesados) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- HEADER -->
+  <header class="app-header" id="appHeader">
+    <h1>📡 CSM Dashboard — TNE</h1>
+    <div class="meta">
+      Atualizado: <span data-last-update>--</span> |
+      <span data-record-count>0</span> registros
+      <button class="theme-toggle" id="themeToggle" type="button">🌙 Escuro</button>
+    </div>
+  </header>
+
+  <!-- 1. ASSISTENTE DE IMPORTAÇÃO -->
+  <section class="upload-row">
+
+    <label class="upload-slot" id="slotAgendadas">
+      <button class="slot-clear" type="button">×</button>
+      <div class="slot-title">📋 Agendadas</div>
+      <div class="slot-sub">Atividades programadas (TNE_FMMT)</div>
+      <div class="slot-status waiting">⏳ Aguardando arquivo</div>
+      <input type="file" accept=".xlsx,.xls,.csv">
+    </label>
+
+    <label class="upload-slot" id="slotNaoAgendadas">
+      <button class="slot-clear" type="button">×</button>
+      <div class="slot-title">⚡ Não Agendadas</div>
+      <div class="slot-sub">Atividades não programadas</div>
+      <div class="slot-status waiting">⏳ Aguardando arquivo</div>
+      <input type="file" accept=".xlsx,.xls,.csv">
+    </label>
+
+    <div class="upload-slot slot-genesis" id="slotEventos" style="cursor:default;">
+      <button class="slot-clear" type="button">×</button>
+      <div class="slot-title">🏭 Eventos (Gênesis)</div>
+      <div class="slot-sub">Cole o texto copiado do sistema Gênesis</div>
+      <div class="slot-status waiting">⏳ Aguardando texto</div>
+      <textarea placeholder="Cole aqui o texto copiado do Gênesis (Ctrl+V)"></textarea>
+    </div>
+
+    <label class="upload-slot" id="slotBaseAuxiliar">
+      <button class="slot-clear" type="button">×</button>
+      <div class="slot-title">🔗 Base Auxiliar</div>
+      <div class="slot-sub">u_task_evento • Concentradores + ⚠️ Missão Crítica</div>
+      <div class="slot-status waiting">⏳ Aguardando arquivo</div>
+      <input type="file" accept=".xlsx,.xls,.csv">
+    </label>
+
+  </section>
+
+  <!-- STATS -->
+  <section class="stats-grid" id="statsCards"></section>
+
+  <!-- FILTROS -->
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-btn active" data-filter="all">🔄 Todos</button>
+    <div class="filter-separator"></div>
+
+    <span class="filter-label">🎯 Prioridade:</span>
+    <button class="filter-btn" data-filter="P1">P1</button>
+    <button class="filter-btn" data-filter="P2">P2</button>
+    <button class="filter-btn" data-filter="P3">P3</button>
+    <button class="filter-btn" data-filter="P4">P4</button>
+    <button class="filter-btn" data-filter="P5">P5</button>
+    <div class="filter-separator"></div>
+
+    <span class="filter-label">⏱️ SLA:</span>
+    <button class="filter-btn" data-filter="noprazo">✅ No Prazo</button>
+    <button class="filter-btn" data-filter="vencidos">❌ Vencidos</button>
+    <div class="filter-separator"></div>
+
+    <span class="filter-label">🔀 Cruzamento:</span>
+    <button class="filter-btn" data-filter="fora">🔴 Fora</button>
+    <button class="filter-btn" data-filter="verificar">🟠 Verificando</button>
+    <button class="filter-btn" data-filter="concentrador">🟣 Concentrador</button>
+    <div class="filter-separator"></div>
+
+    <span class="filter-label">🗺️ TNE:</span>
+    <button class="filter-btn" data-filter="tne1">TNE 1</button>
+    <button class="filter-btn" data-filter="tne2">TNE 2</button>
+    <div class="filter-separator"></div>
+
+    <span class="filter-label" title="Coluna 'Estado' das planilhas de atividades (Concluídos e Cancelados já são excluídos automaticamente)">📋 Andamento:</span>
+    <button class="filter-btn" data-filter="pendente">🕓 Pendente</button>
+    <button class="filter-btn" data-filter="iniciada">▶️ Iniciada</button>
+    <button class="filter-btn" data-filter="naoiniciada">⏳ Não Iniciada</button>
+    <div class="filter-separator"></div>
+
+    <span class="filter-label">UF:</span>
+    <span id="ufFilterGroup" style="display:contents;"></span>
+    <div class="filter-separator"></div>
+
+    <button class="filter-btn" id="resetFilters">🧹 Limpar filtros</button>
+  </div>
+
+  <!-- BUSCA + EXPORTAÇÃO -->
+  <div class="toolbar-row">
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="TSK, NE, END_ID, Cidade, Técnico, Falha, UF...">
+    </div>
+    <button class="filter-btn btn-export" id="btnExportXlsx">📊 XLSX</button>
+    <button class="filter-btn btn-export" id="btnExportCsv">🧾 CSV</button>
+    <button class="filter-btn btn-export" id="btnExportCopy">📋 Copiar</button>
+  </div>
+
+  <!-- TABELA -->
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th data-sort="uf">UF</th>
+          <th data-sort="tne">TNE</th>
+          <th data-sort="tsk">TSK</th>
+          <th data-sort="prioridade">Prioridade</th>
+          <th data-sort="ne">NE ID</th>
+          <th data-sort="end_id">END_ID</th>
+          <th data-sort="tipoFalha">Tipo Falha</th>
+          <th data-sort="cruzamento">Cruzamento</th>
+          <th title="Missão Crítica: Sites Dependentes por Tx ≥ 4 + Falha de Energia">⚠️ MC</th>
+          <th>SLA (Fim)</th>
+          <th>Tempo Restante</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr><td colspan="11" class="empty-row">Nenhum chamado encontrado. Faça upload das planilhas.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="meta" style="text-align:right;"><span id="rowCount">0</span> registros exibidos</div>
+
+</div>
+
+<!-- Bootstrap da aplicação (ES Modules — precisa ser servido via http(s), não abrir com file://) -->
+<script type="module" src="app.js"></script>
+</body>
+</html>
