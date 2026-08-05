@@ -1,0 +1,5 @@
+/* Reservado para a próxima iteração (Charts.js + ChartService.js).
+   Ver DIAGNOSTICO_E_ARQUITETURA.md — gráficos ficaram para a 2ª rodada. */
+
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.chart-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 12px; box-shadow: var(--sh-sm); }

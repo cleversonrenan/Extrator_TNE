@@ -1,0 +1,38 @@
+table th { position: sticky; top: 0; background: var(--white); font-size: 11px; text-transform: uppercase; color: var(--text2); padding: 10px 8px; text-align: left; border-bottom: 2px solid var(--border); cursor: pointer; white-space: nowrap; }
+table td { padding: 8px; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: middle; }
+table tr:hover td { background: rgba(0,0,0,0.02); }
+
+.badge { font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 10px; display: inline-block; }
+.badge-p1 { background: var(--red-light); color: var(--red); }
+.badge-p2 { background: var(--orange-light); color: var(--orange); }
+.badge-p3 { background: var(--yellow-light); color: #a67c00; }
+.badge-p4 { background: var(--blue-light); color: #1565c0; }
+.badge-p5 { background: var(--tag); color: var(--muted); }
+.badge-fora { background: var(--red-light); color: var(--red); }
+.badge-verificar { background: var(--orange-light); color: var(--orange); }
+.badge-concentrador { background: var(--purple-light); color: var(--purple); }
+
+.uf-badge, .tne-badge { font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 10px; display: inline-block; }
+
+tr.row-concentrador { background: var(--red-light) !important; }
+tr.row-p1 { background: var(--red-light); }
+tr.row-p2 { background: var(--orange-light); }
+tr.row-p3 { background: var(--yellow-light); }
+tr.row-p4 { background: var(--blue-light); }
+tr.row-p5 { background: var(--tag); }
+
+.tsk-concentrador { color: #b91c1c; }
+.mc-icon { font-size: 16px; }
+.ellipsis { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.center { text-align: center; }
+.muted { color: var(--muted); }
+.empty-row { text-align: center; padding: 30px; color: var(--muted); }
+
+.sla-date.estourado, .sla-time.estourado { color: var(--red); font-weight: 600; }
+.sla-date.amarelo, .sla-time.amarelo { color: #a67c00; font-weight: 600; }
+.sla-date.verde, .sla-time.verde { color: var(--green); }
+.sla-bar { width: 100%; height: 4px; background: var(--tag); border-radius: 4px; margin-top: 3px; overflow: hidden; }
+.sla-bar .fill { height: 100%; }
+.sla-bar .fill.verde { background: var(--green); }
+.sla-bar .fill.amarelo { background: var(--yellow); }
+.sla-bar .fill.estourado { background: var(--red); }

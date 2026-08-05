@@ -1,0 +1,21 @@
+.filter-btn {
+  padding: 4px 14px; border: 2px solid var(--border); background: var(--white);
+  border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 600;
+  color: var(--text2); transition: all 0.2s;
+}
+.filter-btn:hover { border-color: var(--purple); }
+.filter-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+.btn-export { display: inline-flex; align-items: center; gap: 4px; }
+
+.toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 200; }
+.toast {
+  background: var(--white); border-left: 4px solid var(--muted); box-shadow: var(--sh-md);
+  padding: 10px 16px; border-radius: 8px; font-size: 12px; opacity: 0; transform: translateY(8px);
+  transition: all 0.25s;
+}
+.toast-visible { opacity: 1; transform: translateY(0); }
+.toast-success { border-left-color: var(--green); }
+.toast-warn { border-left-color: var(--yellow); }
+.toast-error { border-left-color: var(--red); }
+
+.theme-toggle { border: 1px solid var(--border2); background: var(--white); border-radius: 20px; padding: 4px 10px; cursor: pointer; font-size: 12px; }

@@ -1,0 +1,12 @@
+/* Estados finos de drag-and-drop além do que já está em cards.css.
+   Mantido como arquivo próprio (em vez de tudo em cards.css) porque o
+   prompt mestre trata "drag and drop" como uma preocupação de primeira
+   classe (compatibilidade entre navegadores) — ao crescer, a lógica de
+   estado visual do drop-zone fica isolada aqui. */
+
+.upload-slot.drag-over::after {
+  content: '⬇ Solte o arquivo aqui';
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(106, 27, 154, 0.08); color: var(--purple); font-weight: 600; font-size: 12px;
+  border-radius: var(--r-sm);
+}

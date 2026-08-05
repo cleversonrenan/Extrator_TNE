@@ -1,0 +1,4 @@
+/* Reservado para o modal de "detalhes da linha" (próxima iteração). */
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(20,20,40,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal-box { background: var(--white); border-radius: var(--r-md); padding: 20px; max-width: 600px; width: 90%; box-shadow: var(--sh-md); }
